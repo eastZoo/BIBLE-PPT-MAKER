@@ -59,45 +59,63 @@ def extract_numbers(input_string):
 def create_ppt():
     prs = Presentation('template.pptx') # 파워포인트를 다루는 함수 변수 선언Load the PowerPoint template
     # 입력된 말씀 범위 데이터 가져오기   
-    bible_range_text.get()
-    
+    slide_layout = prs.slides[0]
+
     df = pd.read_csv(f"./bible/{current_select_bible_name}.csv")
+    df['절'] = pd.to_numeric(df['절'])
+
     print(df.columns)
 
     # 입력받은 문자를 말씀, 장, 절로 분리하는 함수
     말씀, 장, 절 = extract_numbers(bible_range_text.get())
+    
+    print(type(말씀))
+    print(type(장[0]))
+    print(type(절[0]), 절[1])
+    
+    print(df.info())
+    
+    condition = (df.색인 == 말씀) & (df.장 == 장[0]) & (df.절 >= 절[0]) & (df.절 <= 절[1])
+    filtered_table = df.loc[ condition ,['색인','장','절','내용']]
+    print(df.loc[ condition ,['색인', '장','절','내용']])
+    print(len(filtered_table))
 
-    # # 첫번째 페이지
-    # for shape in prs.slides[0].shapes:
-    #     # 첫번째 페이지의 오브젝트중 글자상자만 찾는 조건문 ( true | false )
-    #     if shape.has_text_frame:
-    #         # 글자상자 변수에 저장
-    #         text_frame = shape.text_frame
-    #         # 기존에 들어있는 글자 삭제
-    #         text_frame.clear()
-    #         # 새로운 글자 입력 ( 말씀 제목 )
-    #         p = text_frame.paragraphs[0]
-            
-    #         run = p.add_run()
-    #         run.text = text_to_insert
-            
-    #         # 글꼴 크기 및 글꼴 패밀리 설정
-    #         font = run.font
-    #         font.name = '나눔스퀘어 ExtraBold'
-    #         font.size = Pt(31)
-    #         # 글자색 설정
-    #         font.color.rgb = RGBColor(255,255,255)
+    # 첫번째 페이지
+    for index, row in filtered_table.iterrows():
+        for shape in prs.slides[0].shapes:
+            print(shape)
+            # 첫번째 페이지의 오브젝트중 글자상자만 찾는 조건문 ( true | false )
+            if shape.has_text_frame:
+                # 글자상자 변수에 저장
+                text_frame = shape.text_frame
+                # 기존에 들어있는 글자 삭제
+                text_frame.clear()
+                # 새로운 글자 입력 ( 말씀 제목 )
+                p = text_frame.paragraphs[0]
+                
+                run = p.add_run()
+                run.text = f"{row['색인']} {row['장']}장 {row['절']}절"
+                
+                # 글꼴 크기 및 글꼴 패밀리 설정
+                font = run.font
+                font.name = '나눔스퀘어 ExtraBold'
+                font.size = Pt(31)
+                # 글자색 설정
+                font.color.rgb = RGBColor(255,255,255)
+                
+                prs.slides.add_slide(text_frame)
+                
 
 
-    #         # 현재 날짜와 시간을 형식화하여 가져옵니다.
-    #         today_datetime = datetime.today().strftime('%Y-%m-%d %H-%M-%S')
+                
 
-    #         # Modify the file name to today's date
-    #         new_file_name = f"Presentation_{today_datetime}.pptx"
-            
-    #         # Save the modified presentation
-    #         prs.save(new_file_name)
-
+                
+    # 현재 날짜와 시간을 형식화하여 가져옵니다.
+    today_datetime = datetime.today().strftime('%Y-%m-%d %H-%M-%S')
+    # Modify the file name to today's date
+    new_file_name = f"Presentation_{today_datetime}.pptx"
+    # Save the modified presentation
+    prs.save(new_file_name)
     messagebox.showinfo("Success", "Presentation created successfully!")
 
 
