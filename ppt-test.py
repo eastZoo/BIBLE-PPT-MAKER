@@ -57,8 +57,10 @@ def extract_numbers(input_string):
 
 # 입력한 말씀 조건에 맞는 파워포인트 생성 함수
 def create_ppt():
-    prs = Presentation('template.pptx') # 파워포인트를 다루는 함수 변수 선언Load the PowerPoint template   
-   
+    prs = Presentation('template.pptx') # 파워포인트를 다루는 함수 변수 선언Load the PowerPoint template
+    # 입력된 말씀 범위 데이터 가져오기   
+    slide_layout = prs.slides[0]
+
     # 선택된 성경 .csv 파일 읽어오기
     df = pd.read_csv(f"./bible/{current_select_bible_name}.csv")
     df['절'] = pd.to_numeric(df['절'])
@@ -117,24 +119,28 @@ def create_ppt():
     print('main_df',main_df)
     # 첫번째 페이지
     for index, row in main_df.iterrows():
-      # 슬라이드 추가
-        slide_layout = prs.slide_layouts[0]  # 0은 제목과 내용이 있는 슬라이드 레이아웃
-        slide = prs.slides.add_slide(slide_layout)
-        
-        # 제목과 내용 추가
-        title = slide.shapes.title
-        content = slide.placeholders[10]
-        
-        title.text = f"{row['색인']} {row['장']}장 {row['절']}절"
-        
-         # 글꼴 크기 및 글꼴 패밀리 설정
-        # font = title.font
-        # font.name = '나눔스퀘어 ExtraBold'
-        # font.size = Pt(31)
-        # # 글자색 설정
-        # font.color.rgb = RGBColor(255,255,255)
-        
-        content.text = row['내용']
+        for shape in prs.slides[0].shapes:
+            print(shape)
+            # 첫번째 페이지의 오브젝트중 글자상자만 찾는 조건문 ( true | false )
+            if shape.has_text_frame:
+                # 글자상자 변수에 저장
+                text_frame = shape.text_frame
+                # 기존에 들어있는 글자 삭제
+                text_frame.clear()
+                # 새로운 글자 입력 ( 말씀 제목 )
+                p = text_frame.paragraphs[0]
+                
+                run = p.add_run()
+                run.text = f"{row['색인']} {row['장']}장 {row['절']}절"
+                
+                # 글꼴 크기 및 글꼴 패밀리 설정
+                font = run.font
+                font.name = '나눔스퀘어 ExtraBold'
+                font.size = Pt(31)
+                # 글자색 설정
+                font.color.rgb = RGBColor(255,255,255)
+                
+                prs.slides.add_slide(text_frame)
                 
                 
     # 현재 날짜와 시간을 형식화하여 가져옵니다.
