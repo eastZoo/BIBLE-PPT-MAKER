@@ -32,7 +32,7 @@ bible_range = ""
 def extract_numbers(input_string):
     # 첫번째로 입력받은 문자열의 공백을 모두 제거
     input_string = input_string.replace(" ", "")
-    print(input_string)
+
     # 숫자가 나오기 전까지의 문자열 추출하여 말씀에 저장
     말씀 = ''
     장 = []
@@ -61,61 +61,98 @@ def create_ppt():
     # 입력된 말씀 범위 데이터 가져오기   
     slide_layout = prs.slides[0]
 
+    # 선택된 성경 .csv 파일 읽어오기
     df = pd.read_csv(f"./bible/{current_select_bible_name}.csv")
     df['절'] = pd.to_numeric(df['절'])
 
-    print(df.columns)
+    
+    # 빈 DataFrame 생성
+    main_df = pd.DataFrame(columns=['색인', '장','절','내용'])
+
+    ### 입력한 성경 필터 처리 가공 시작
+    result_list = bible_range_text.get().split(',')
+    
+    print(result_list)
 
     # 입력받은 문자를 말씀, 장, 절로 분리하는 함수
-    말씀, 장, 절 = extract_numbers(bible_range_text.get())
-    
-    print(type(말씀))
-    print(type(장[0]))
-    print(type(절[0]), 절[1])
-    
-    print(df.info())
-    
-    condition = (df.색인 == 말씀) & (df.장 == 장[0]) & (df.절 >= 절[0]) & (df.절 <= 절[1])
-    filtered_table = df.loc[ condition ,['색인','장','절','내용']]
-    print(df.loc[ condition ,['색인', '장','절','내용']])
-    print(len(filtered_table))
+    # , 로 받은 복수개의 말씀들을 범위 분해
+    for input_bible in result_list:
+        말씀, 장, 절 = extract_numbers(input_bible)
+        
+        print(f"말씀 : {말씀, len(말씀)} , 장  : {장,len(장)==1}, 절 : {절,len(절)==0} ")
+        
+        # 예) 
+        #     창1       =  창세기 1장 전체
+        #     롬1-3    =  로마서 1장 1절 - 3장 전체
+        #     전1:3    =  전도서 1장 3절
+        #     레1-3:9 =  레위기 1장 1절 - 3장 9절
+        #     스1:3-9 =  에스라 1장 3절 - 1장 9절
 
-    # 첫번째 페이지
-    for index, row in filtered_table.iterrows():
-        for shape in prs.slides[0].shapes:
-            print(shape)
-            # 첫번째 페이지의 오브젝트중 글자상자만 찾는 조건문 ( true | false )
-            if shape.has_text_frame:
-                # 글자상자 변수에 저장
-                text_frame = shape.text_frame
-                # 기존에 들어있는 글자 삭제
-                text_frame.clear()
-                # 새로운 글자 입력 ( 말씀 제목 )
-                p = text_frame.paragraphs[0]
+        # ex)  창1
+        if(len(장)==1 and len(절)==0):
+            print("창1")
+            condition = (df.색인 == 말씀) & (df.장 == 장[0])
+        # ex) 롬1-3 o
+        elif(len(장) > 1 and len(절)==0):
+            print("롬1-3")
+            condition = (df.색인 == 말씀) & (df.장 >= 장[0])  & (df.장 <= 장[1])
+        # # ex) 전1:3 o
+        elif(len(장)==1 and len(절)==1):
+            print("전1:3")
+            condition = (df.색인 == 말씀) & (df.장 == 장[0])  & (df.절 == 절[0])
+        # # ex) 레1-3:9
+        elif(len(장) > 1 and len(절)==1):
+            print("레1-3:9")
+            condition_1 = (df['색인'] == 말씀) & (df['장'] >= 장[0])& (df['장'] < 장[1])
+            condition_2 = (df['색인'] == 말씀) & (df['장'] == 장[1]) & (df['절'] <= 절[0])
+            
+            condition = condition_1 | condition_2
+        # # ex) 스1:3-9
+        elif(len(장)==1 and len(절)>1):
+            print("스1:3-9")    
+            condition = (df.색인 == 말씀) & (df.장 == 장[0]) & (df.절 >= 절[0]) & (df.절 <= 절[1])
+ 
+        
+        # filtered_table = df.loc[ condition ,['색인','장','절','내용']]
+        main_df = pd.concat([main_df, df.loc[ condition ,['색인','장','절','내용']]])
+
+    print('main_df',main_df.head)
+    # # 첫번째 페이지
+    # for index, row in filtered_table.iterrows():
+    #     for shape in prs.slides[0].shapes:
+    #         print(shape)
+    #         # 첫번째 페이지의 오브젝트중 글자상자만 찾는 조건문 ( true | false )
+    #         if shape.has_text_frame:
+    #             # 글자상자 변수에 저장
+    #             text_frame = shape.text_frame
+    #             # 기존에 들어있는 글자 삭제
+    #             text_frame.clear()
+    #             # 새로운 글자 입력 ( 말씀 제목 )
+    #             p = text_frame.paragraphs[0]
                 
-                run = p.add_run()
-                run.text = f"{row['색인']} {row['장']}장 {row['절']}절"
+    #             run = p.add_run()
+    #             run.text = f"{row['색인']} {row['장']}장 {row['절']}절"
                 
-                # 글꼴 크기 및 글꼴 패밀리 설정
-                font = run.font
-                font.name = '나눔스퀘어 ExtraBold'
-                font.size = Pt(31)
-                # 글자색 설정
-                font.color.rgb = RGBColor(255,255,255)
+    #             # 글꼴 크기 및 글꼴 패밀리 설정
+    #             font = run.font
+    #             font.name = '나눔스퀘어 ExtraBold'
+    #             font.size = Pt(31)
+    #             # 글자색 설정
+    #             font.color.rgb = RGBColor(255,255,255)
                 
-                prs.slides.add_slide(text_frame)
+    #             prs.slides.add_slide(text_frame)
                 
 
 
                 
 
                 
-    # 현재 날짜와 시간을 형식화하여 가져옵니다.
-    today_datetime = datetime.today().strftime('%Y-%m-%d %H-%M-%S')
-    # Modify the file name to today's date
-    new_file_name = f"Presentation_{today_datetime}.pptx"
-    # Save the modified presentation
-    prs.save(new_file_name)
+    # # 현재 날짜와 시간을 형식화하여 가져옵니다.
+    # today_datetime = datetime.today().strftime('%Y-%m-%d %H-%M-%S')
+    # # Modify the file name to today's date
+    # new_file_name = f"Presentation_{today_datetime}.pptx"
+    # # Save the modified presentation
+    # prs.save(new_file_name)
     messagebox.showinfo("Success", "Presentation created successfully!")
 
 
@@ -186,11 +223,10 @@ def home_page():
     bibile_range_textbox.focus()
     # end 성경 범위 입력
     
-    Fact="""예) 창   =  창세기 전체
-창1       =  창세기 1장 전체
+    Fact="""예)창1       =  창세기 1장 전체
 롬1-3    =  로마서 1장 1절 - 3장 전체
-레1-3:9 =  레위기 1장 1절 - 3장 9절
 전1:3    =  전도서 1장 3절
+레1-3:9 =  레위기 1장 1절 - 3장 9절
 스1:3-9 =  에스라 1장 3절 - 1장 9절
     """
 # 사1:3-3:9= 이사야 1장 3절 - 3장 9절

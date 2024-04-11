@@ -1,0 +1,2 @@
+python-pptx==0.6.23
+pandas==1.5.3
