@@ -10,38 +10,25 @@ import os
 from datetime import datetime
 import re
 
-import sqlite3
-
 #custom modules
 import query
 import pages.history as history
 
-#테이블 생성 및 데이터 삽입
-conn = sqlite3.connect('history.db')
-
-# db 쿼리를 조작하기 위한 커서 객체 생성
-cur = conn.cursor()
-
-# 테이블 생성
-cur.execute("""CREATE TABLE IF NOT EXISTS history(
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  history TEXT,
-  createAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  )""")
-# 변경사항 저장
-conn.commit()
-conn.close()
+# 초기 쿼리 세팅
+query.initial()
 
 rootdir ="/"
 
 root = tk.Tk()
 root.title('말씀 ppt 생성기 - made by eastzoo')
 root.geometry("510x340")
+root.resizable(0, 0)
 
 bible_range_text = tk.StringVar()
 
 #STYLE
 basicFont = 10
+basicWidth = 18
 
 # 셀렉트 박스 리스트 담는 변수
 bible_list_name = []
@@ -179,7 +166,7 @@ def create_ppt():
     prs.save(file_path)
     
     query.insert(bible_range_text.get().replace(" ", ""))
-    messagebox.showinfo("Success", "Presentation created successfully!")
+    messagebox.showinfo("Success", "말씀 ppt를 성공적으로 생성했습니다.!")
 
 
 def delete_page():
@@ -227,17 +214,17 @@ def home_page():
     bibile_label.place(x=10, y= 10)
 
     ## 성경 셀렉트박스
-    select_bible = ttk.Combobox(home_frame, values=bible_list_name, width=10)
+    select_bible = ttk.Combobox(home_frame, values=bible_list_name, width=basicWidth-2)
     select_bible.set(bible_list_name[0])
+    select_bible.place(x=80, y=10)
+    
      # 셀렉트 박스에서 현재 선택된 값 변수에 저장 
     def getSelectedItem(arg):
         global current_select_bible_name
         # 선택한 항목 테이블 만드는 함수
         current_select_bible_name = select_bible.get()
-    
     select_bible.bind("<<ComboboxSelected>>", getSelectedItem)
     
-    select_bible.place(x=50, y=10)
     # end 셀렉트박스 wrapper 
     
     
@@ -249,8 +236,9 @@ def home_page():
     ## 성경범위 라벨
     bibile_range = tk.Label(home_frame, text='성경 구절', font=('Bold', basicFont))
     bibile_range.place(x=10, y= 40)
-    ## 성경범위 라벨
-    bibile_range_textbox = ttk.Entry(home_frame, textvariable=bible_range_text, width=20)
+    
+    ## 성경범위 input
+    bibile_range_textbox = ttk.Entry(home_frame, textvariable=bible_range_text,font=('Bold', basicFont), width=basicWidth+1)
     # 엔터 키를 눌렀을 때 on_enter_press 함수 실행
     bibile_range_textbox.bind("<Return>", on_enter_press)
     bibile_range_textbox.place(x=80, y= 40)
@@ -265,12 +253,12 @@ def home_page():
     """
     # 사1:3-3:9= 이사야 1장 3절 - 3장 9절
     
-    T = tk.Text(home_frame, height = 8, width = 52, )
-    T.place(x=10, y=120)
+    T = tk.Text(home_frame, height = 8, width =42, )
+    T.place(x=10, y=220)
     T.insert(tk.END, Fact)
     
-    make_ppt_btn = tk.Button(home_frame, text='PPT 만들기', font=('Bold', basicFont), command=create_ppt)
-    make_ppt_btn.place(x=10, y=80)
+    make_ppt_btn = tk.Button(home_frame, text='PPT 만들기', font=('Bold', basicFont), height=3, command=create_ppt)
+    make_ppt_btn.place(x=230, y=10)
 
     home_frame.pack(expand=True, fill='both', pady=20)
 

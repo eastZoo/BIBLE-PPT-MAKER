@@ -1,5 +1,6 @@
 *.pptx
 history.db
+bible_index.db
 
 __pycache__
 
