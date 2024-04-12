@@ -116,6 +116,8 @@ def create_ppt():
         elif(len(장)==1 and len(절)>1):
             print("스1:3-9")    
             condition = (df.색인 == 말씀) & (df.장 == 장[0]) & (df.절 >= 절[0]) & (df.절 <= 절[1])
+        else:
+            messagebox.showinfo("Fail", "잘못된 입력 입니다.")
  
         
         # filtered_table = df.loc[ condition ,['색인','장','절','내용']]
@@ -218,6 +220,7 @@ def home_page():
     select_bible.set(bible_list_name[0])
     select_bible.place(x=80, y=10)
     
+    
      # 셀렉트 박스에서 현재 선택된 값 변수에 저장 
     def getSelectedItem(arg):
         global current_select_bible_name
@@ -245,11 +248,50 @@ def home_page():
     bibile_range_textbox.focus()
     # end 성경 범위 입력
     
-    Fact="""예)창1       =  창세기 1장 전체
+    
+    
+    ## 성경 인덱스 리스트
+    
+    # 리스트 박스 생성
+    # padx = 좌우 패딩
+    bible_index_list = query.bible_index_select()
+    
+    bible_index_tree = ttk.Treeview(home_frame, column=("c1", "c2"), show='headings', height=5)
+    bible_index_tree.place(x=10, y= 70)
+    
+    bible_index_tree.column("# 1", anchor="center",width=150)
+    bible_index_tree.heading("# 1", text="성경")
+    bible_index_tree.column("# 2", anchor="center",width=150)
+    bible_index_tree.heading("# 2", text="약어")
+    
+    
+    def on_click(event):
+        print("selected items:")
+        item = bible_index_tree.focus()
+        bibile_range_textbox.insert(0, item)  
+        print(item)
+  
+        
+              
+    vsb = ttk.Scrollbar(home_frame, orient="vertical", command=bible_index_tree.yview)
+    vsb.place(x=293, y= 72, height=122)
+    bible_index_tree.configure(yscrollcommand=vsb.set)
+    
+    # 데이터를 리스트 박스에 추가
+    for item in bible_index_list:
+        bible_index_tree.insert('',"end", values=(f'{item[0]}',f'{item[1]}'), iid=item[2])
+    
+    # 트리뷰에 이벤트 바인딩
+    bible_index_tree.bind("<<TreeviewSelect>>", on_click)
+    
+    
+    
+    Fact="""예)
+창1      =  창세기 1장 전체
 롬1-3    =  로마서 1장 1절 - 3장 전체
 전1:3    =  전도서 1장 3절
-레1-3:9 =  레위기 1장 1절 - 3장 9절
-스1:3-9 =  에스라 1장 3절 - 1장 9절
+레1-3:9  =  레위기 1장 1절 - 3장 9절
+스1:3-9  =  에스라 1장 3절 - 1장 9절
     """
     # 사1:3-3:9= 이사야 1장 3절 - 3장 9절
     
