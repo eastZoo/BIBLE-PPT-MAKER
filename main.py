@@ -10,6 +10,28 @@ import os
 from datetime import datetime
 import re
 
+import sqlite3
+
+#custom modules
+import query
+import pages.history as history
+
+#테이블 생성 및 데이터 삽입
+conn = sqlite3.connect('history.db')
+
+# db 쿼리를 조작하기 위한 커서 객체 생성
+cur = conn.cursor()
+
+# 테이블 생성
+cur.execute("""CREATE TABLE IF NOT EXISTS history(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  history TEXT,
+  createAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )""")
+# 변경사항 저장
+conn.commit()
+conn.close()
+
 rootdir ="/"
 
 root = tk.Tk()
@@ -68,16 +90,14 @@ def create_ppt():
     main_df = pd.DataFrame(columns=['색인', '장','절','내용'])
 
     ### 입력한 성경 필터 처리 가공 시작
+    
     result_list = bible_range_text.get().split(',')
     
-    print(result_list)
 
     # 입력받은 문자를 말씀, 장, 절로 분리하는 함수
     # , 로 받은 복수개의 말씀들을 범위 분해
     for input_bible in result_list:
         말씀, 장, 절 = extract_numbers(input_bible)
-        
-        print(f"말씀 : {말씀, len(말씀)} , 장  : {장,len(장)==1}, 절 : {절,len(절)==0} ")
         
         # 예) 
         #     창1       =  창세기 1장 전체
@@ -114,7 +134,6 @@ def create_ppt():
         # filtered_table = df.loc[ condition ,['색인','장','절','내용']]
         main_df = pd.concat([main_df, df.loc[ condition ,['색인','장','절','내용']]])
 
-    print('main_df',main_df)
     # 첫번째 페이지
     for index, row in main_df.iterrows():
       # 슬라이드 추가
@@ -143,6 +162,8 @@ def create_ppt():
     new_file_name = f"Presentation_{today_datetime}.pptx"
     # Save the modified presentation
     prs.save(new_file_name)
+    
+    query.insert(bible_range_text.get().replace(" ", ""))
     messagebox.showinfo("Success", "Presentation created successfully!")
 
 
@@ -154,6 +175,9 @@ def delete_page():
 # 셀렉트 박스 데이터 가져오는 함수
 def get_bible_select_data():
     global bible_list_name
+    # 첫시작 시 초기화 코드 ( 화면 실행 될때마다 데이터 쌓임 방지 )
+    
+    bible_list_name = []
     # 성경 폴더에 있는 성경종류 리스트 가져오기 ( 개역개정, + a 예정 )
     bible_list = os.listdir('./bible')
     # 엑셀 확장자 삭제후 보관할 리스트 변수
@@ -193,7 +217,6 @@ def home_page():
      # 셀렉트 박스에서 현재 선택된 값 변수에 저장 
     def getSelectedItem(arg):
         global current_select_bible_name
-        print(select_bible.get())
         # 선택한 항목 테이블 만드는 함수
         current_select_bible_name = select_bible.get()
     
@@ -219,7 +242,7 @@ def home_page():
 레1-3:9 =  레위기 1장 1절 - 3장 9절
 스1:3-9 =  에스라 1장 3절 - 1장 9절
     """
-# 사1:3-3:9= 이사야 1장 3절 - 3장 9절
+    # 사1:3-3:9= 이사야 1장 3절 - 3장 9절
     
     T = tk.Text(home_frame, height = 8, width = 52, )
     T.place(x=10, y=120)
@@ -229,34 +252,27 @@ def home_page():
     make_ppt_btn.place(x=10, y=80)
 
     home_frame.pack(expand=True, fill='both', pady=20)
-    
-    
-    
-# prev 페이지 띄우는 함수
-def prev_page():
-    prev_frame = tk.Frame(main_frame)
 
-    lb = tk.Label(prev_frame, text='prev Page \n\nPage: 2', font=('Bold', 30))
-    lb.pack()
 
-    prev_frame.pack(pady=20)
-    
+
 # 사이드 메뉴 선택에 따라 다른 페이지 숨김 함수
 def hide_indicators():
     home_indicate.config(bg='#DADADA')
-    prev_indicate.config(bg='#DADADA')
+    history_indicate.config(bg='#DADADA')
     
-#사이드 메뉴 클릭시 클릭 css 표시 함수
-def indicate(lb, page):
+# 페이지 라우팅미들웨어 + 사이드 메뉴 클릭시 클릭 css 표시 함수
+def indicate(type,lb, page):
     hide_indicators()
     lb.config(bg='#F15642')
     delete_page()
-    page()
-
-
-
-
-
+    
+    # 페이지 별 라우팅
+    if(type == "history"):
+        print("HISTORY")
+        print(page)
+        page()
+    if(type == "home"):
+        page()
 
 # 사이드바  options_frame
 options_frame = tk.Frame(root, bg='#DADADA')
@@ -276,25 +292,27 @@ main_frame.configure(height=400, width=500)
 # 홈 버튼 이미지
 #start
 homeImg = tk.PhotoImage(file="./assets/icons/ppt.png")
-home_btn = tk.Button(options_frame, text='Home', font=('Bold', 15), image=homeImg, height=50, width=50, command=lambda: indicate(home_indicate, home_page))
+home_btn = tk.Button(options_frame, text='Home', font=('Bold', 15), image=homeImg, height=50, width=50, command=lambda: indicate("home",home_indicate, home_page))
 home_btn.place(x=0, y=0)
 
 home_indicate = tk.Label(options_frame, text='')
 home_indicate.place(x=0, y=0, width=5, height=55)
 #end
 
-
-# 기록 버튼 이미지
+    
+    
+# 기록(history) 버튼 이미지
 #start
-prevImg = tk.PhotoImage(file="./assets/icons/history.png")
-prev_btn = tk.Button(options_frame, text='prev', font=('Bold', 15), image=prevImg, height=50, width=50, command=lambda: indicate(prev_indicate, prev_page))
-prev_btn.place(x=0, y=55)
+historyImg = tk.PhotoImage(file="./assets/icons/history.png")
+history_btn = tk.Button(options_frame, text='history', font=('Bold', 15), 
+                        image=historyImg, height=50, width=50, command=lambda: indicate("history",history_indicate, lambda: history.history_page(main_frame)))
+history_btn.place(x=0, y=55)
 
-prev_indicate = tk.Label(options_frame, text='')
-prev_indicate.place(x=0, y=55, width=5, height=55)
+history_indicate = tk.Label(options_frame, text='')
+history_indicate.place(x=0, y=55, width=5, height=55)
 #end
 
 
 # 처음 시작할때 메인 페이지 세팅 __INIT__
-indicate(home_indicate, home_page)
+indicate("home",home_indicate, home_page)
 root.mainloop() 

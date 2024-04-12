@@ -1,0 +1,7 @@
+*.pptx
+history.db
+
+__pycache__
+
+ppt-test.py
+test.py
