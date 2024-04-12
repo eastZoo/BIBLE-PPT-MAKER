@@ -4,6 +4,10 @@
 pip install -r requirements.txt
 ```
 
+# ppt 생성 참고
+
+https://github.com/sunghwan2789/Bible2PPT
+
 # python sqllite
 
 https://itstory1592.tistory.com/37
@@ -11,6 +15,10 @@ https://itstory1592.tistory.com/37
 # python slide 레이아웃 관리
 
 https://ai-creator.tistory.com/208
+
+# Tkinter TIP
+
+1. padx = 좌우 패딩
 
 # 첫번째 슬라이드 복사하는 코드 from chatGPT
 

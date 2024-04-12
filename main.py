@@ -160,8 +160,23 @@ def create_ppt():
     today_datetime = datetime.today().strftime('%Y-%m-%d %H-%M-%S')
     # Modify the file name to today's date
     new_file_name = f"Presentation_{today_datetime}.pptx"
-    # Save the modified presentation
-    prs.save(new_file_name)
+    
+    download_folder = os.path.join(os.path.expanduser('~'), 'Downloads')
+    
+    # exportPPT 폴더 경로
+    export_folder = os.path.join(download_folder, 'exportPPT')
+
+    # exportPPT 폴더가 없으면 생성
+    if not os.path.exists(export_folder):
+        os.makedirs(export_folder)
+
+    # 파일 경로 설정
+    file_path = os.path.join(export_folder, new_file_name)
+
+  
+    print(file_path)
+    # PPT 저장
+    prs.save(file_path)
     
     query.insert(bible_range_text.get().replace(" ", ""))
     messagebox.showinfo("Success", "Presentation created successfully!")
@@ -227,11 +242,17 @@ def home_page():
     
     
     # start 성경 범위 입력
+    
+    def on_enter_press(event):
+        create_ppt()
+        
     ## 성경범위 라벨
     bibile_range = tk.Label(home_frame, text='성경 구절', font=('Bold', basicFont))
     bibile_range.place(x=10, y= 40)
     ## 성경범위 라벨
     bibile_range_textbox = ttk.Entry(home_frame, textvariable=bible_range_text, width=20)
+    # 엔터 키를 눌렀을 때 on_enter_press 함수 실행
+    bibile_range_textbox.bind("<Return>", on_enter_press)
     bibile_range_textbox.place(x=80, y= 40)
     bibile_range_textbox.focus()
     # end 성경 범위 입력

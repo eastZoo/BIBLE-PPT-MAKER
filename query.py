@@ -21,7 +21,7 @@ def select():
   conn = sqlite3.connect("history.db")
 
   cur = conn.cursor()
-  cur.execute("SELECT * FROM history")
+  cur.execute("SELECT * FROM history ORDER BY createAt DESC")
 
   historys = cur.fetchall()
   conn.close()
