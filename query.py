@@ -161,3 +161,15 @@ def bible_index_select():
   bible_index = cur.fetchall()
   conn.close()
   return bible_index
+
+# 단축어에 해당하는 성경 풀네임 가져오기
+def get_bible_full_name(abbr):
+  #데이터 조회
+  conn = sqlite3.connect("bible_index.db")
+
+  cur = conn.cursor()
+  cur.execute("SELECT name FROM bible_index WHERE abbr = ?", (abbr,))
+
+  bible_index = cur.fetchone()
+  conn.close()
+  return bible_index[0]

@@ -125,6 +125,7 @@ def create_ppt():
 
     # 첫번째 페이지
     for index, row in main_df.iterrows():
+        bible_name = query.get_bible_full_name(row['색인'])
       # 슬라이드 추가
         slide_layout = prs.slide_layouts[0]  # 0은 제목과 내용이 있는 슬라이드 레이아웃
         slide = prs.slides.add_slide(slide_layout)
@@ -133,7 +134,7 @@ def create_ppt():
         title = slide.shapes.title
         content = slide.placeholders[10]
         
-        title.text = f"{row['색인']} {row['장']}장 {row['절']}절"
+        title.text = f"{bible_name} {row['장']}장 {row['절']}절"
         
          # 글꼴 크기 및 글꼴 패밀리 설정
         # font = title.font
@@ -299,7 +300,7 @@ def home_page():
     
     # 데이터를 리스트 박스에 추가
     for item in bible_index_list:
-        bible_index_tree.insert('',"end", values=(f'{item[0]}',f'{item[1]}'), iid=item[2])
+        bible_index_tree.insert('',"end", values=(f'{item[2]}',f'{item[1]}'), iid=item[2])
     
     # 트리뷰에 이벤트 바인딩
     bible_index_tree.bind("<<TreeviewSelect>>", on_click)
