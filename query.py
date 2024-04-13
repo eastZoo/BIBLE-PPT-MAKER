@@ -13,6 +13,7 @@ def initial():
   hisCur.execute("""CREATE TABLE IF NOT EXISTS history(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     history TEXT,
+    path TEXT,
     createAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )""")
   # 성경 인덱스 테이블 생성
@@ -109,7 +110,7 @@ def initial():
   bible_index.commit()
   bible_index.close()
   
-def insert(data):
+def insert(data,path):
   #테이블 생성 및 데이터 삽입
   conn = sqlite3.connect('history.db')
 
@@ -118,12 +119,13 @@ def insert(data):
 
   print(data)
   print(type(data))
-  cur.execute('INSERT INTO history (history) VALUES (?)',  (data,) )
+  cur.execute('INSERT INTO history (history, path) VALUES (?,?)',  (data,path,) )
   conn.commit()
 
   # 마지막엔 무조건 close() 메소드로 db연결을 해제해야 한다.
   conn.close()
   return "insert SUCCESS"
+  
   
 def select():
   #데이터 조회

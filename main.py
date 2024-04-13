@@ -21,7 +21,7 @@ rootdir ="/"
 
 root = tk.Tk()
 root.title('말씀 ppt 생성기 - made by eastzoo')
-root.geometry("510x340")
+root.geometry("510x360")
 root.resizable(0, 0)
 
 bible_range_text = tk.StringVar()
@@ -146,9 +146,10 @@ def create_ppt():
                 
                 
     # 현재 날짜와 시간을 형식화하여 가져옵니다.
-    today_datetime = datetime.today().strftime('%Y-%m-%d %H-%M-%S')
+    today_datetime = datetime.today().strftime("%y%m%d_%H%m%S")
     # Modify the file name to today's date
-    new_file_name = f"Presentation_{today_datetime}.pptx"
+    name =bible_range_text.get().replace(" ", "")
+    new_file_name = f"[{today_datetime}]말씀.pptx"
     
     download_folder = os.path.join(os.path.expanduser('~'), 'Downloads')
     
@@ -158,16 +159,25 @@ def create_ppt():
     # exportPPT 폴더가 없으면 생성
     if not os.path.exists(export_folder):
         os.makedirs(export_folder)
+        
+    # backup 폴더 경로
+    backup_folder = "./backup"
+
+    # backup 폴더가 없으면 생성
+    if not os.path.exists(backup_folder):
+        os.makedirs(backup_folder)
+
 
     # 파일 경로 설정
     file_path = os.path.join(export_folder, new_file_name)
-
+    file_path_backup = os.path.join('./backup', new_file_name)
   
     print(file_path)
     # PPT 저장
     prs.save(file_path)
+    prs.save(file_path_backup)
     
-    query.insert(bible_range_text.get().replace(" ", ""))
+    query.insert(bible_range_text.get().replace(" ", ""),file_path_backup )
     messagebox.showinfo("Success", "말씀 ppt를 성공적으로 생성했습니다.!")
 
 
@@ -213,12 +223,12 @@ def home_page():
     # start 셀렉트박스 wrapper 
     ## 성경 셀렉트박스 라벨
     bibile_label = tk.Label(home_frame, text='성경', font=('Bold', basicFont))
-    bibile_label.place(x=10, y= 10)
+    bibile_label.place(x=10, y= 1)
 
     ## 성경 셀렉트박스
     select_bible = ttk.Combobox(home_frame, values=bible_list_name, width=basicWidth-2)
     select_bible.set(bible_list_name[0])
-    select_bible.place(x=80, y=10)
+    select_bible.place(x=80, y=1)
     
     
      # 셀렉트 박스에서 현재 선택된 값 변수에 저장 
@@ -238,13 +248,16 @@ def home_page():
         
     ## 성경범위 라벨
     bibile_range = tk.Label(home_frame, text='성경 구절', font=('Bold', basicFont))
-    bibile_range.place(x=10, y= 40)
+    bibile_range.place(x=10, y= 30)
+    
+    example_text = tk.Label(home_frame, text='예) 창1:1-3 , 스1:3-5, 스1 ( "," 콤마구분으로 말씀 ppt 동시 생성가능 )', font=('Bold', basicFont-2))
+    example_text.place(x=10, y= 57)
     
     ## 성경범위 input
     bibile_range_textbox = ttk.Entry(home_frame, textvariable=bible_range_text,font=('Bold', basicFont), width=basicWidth+1)
     # 엔터 키를 눌렀을 때 on_enter_press 함수 실행
     bibile_range_textbox.bind("<Return>", on_enter_press)
-    bibile_range_textbox.place(x=80, y= 40)
+    bibile_range_textbox.place(x=80, y= 30)
     bibile_range_textbox.focus()
     # end 성경 범위 입력
     
@@ -257,7 +270,7 @@ def home_page():
     bible_index_list = query.bible_index_select()
     
     bible_index_tree = ttk.Treeview(home_frame, column=("c1", "c2"), show='headings', height=5)
-    bible_index_tree.place(x=10, y= 70)
+    bible_index_tree.place(x=10, y= 80)
     
     bible_index_tree.column("# 1", anchor="center",width=150)
     bible_index_tree.heading("# 1", text="성경")
@@ -268,13 +281,20 @@ def home_page():
     def on_click(event):
         print("selected items:")
         item = bible_index_tree.focus()
-        bibile_range_textbox.insert(0, item)  
+
+        current_text = bibile_range_textbox.get()
+        if(len(current_text) == 0):
+            bibile_range_textbox.insert(tk.END, current_text + f'{item}')  
+            return
+        
+        bibile_range_textbox.delete(0, tk.END)  # Entry 초기화
+        bibile_range_textbox.insert(tk.END, current_text + f', {item}')  
         print(item)
   
         
               
     vsb = ttk.Scrollbar(home_frame, orient="vertical", command=bible_index_tree.yview)
-    vsb.place(x=293, y= 72, height=122)
+    vsb.place(x=294, y= 81, height=122)
     bible_index_tree.configure(yscrollcommand=vsb.set)
     
     # 데이터를 리스트 박스에 추가
@@ -300,7 +320,7 @@ def home_page():
     T.insert(tk.END, Fact)
     
     make_ppt_btn = tk.Button(home_frame, text='PPT 만들기', font=('Bold', basicFont), height=3, command=create_ppt)
-    make_ppt_btn.place(x=230, y=10)
+    make_ppt_btn.place(x=230, y=1)
 
     home_frame.pack(expand=True, fill='both', pady=20)
 
